@@ -19,7 +19,7 @@ Production **apply** stays blocked unless you set `APPROVE_PROD=true`.
 ## 1) Verify (one script)
 
 ```powershell
-cd c:\Users\vishbhag\git\agentic-devops\health-clinic-agent
+cd health-clinic-agent
 .\scripts\verify.ps1
 ```
 
