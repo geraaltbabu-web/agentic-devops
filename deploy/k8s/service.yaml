@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-devops-demo
+  labels:
+    app: agentic-devops-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: agentic-devops-demo
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

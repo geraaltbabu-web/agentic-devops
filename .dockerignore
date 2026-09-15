@@ -1,0 +1,7 @@
+.git
+.github
+deploy
+scripts
+README.md
+**/__pycache__
+**/*.pyc
