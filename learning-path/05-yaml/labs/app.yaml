@@ -1,0 +1,10 @@
+# The quoted "on" is a string. Unquoted on: no becomes boolean false in YAML 1.1.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+  labels:
+    env: "dev"
+data:
+  feature_on: "yes"
+  version: "1.10"

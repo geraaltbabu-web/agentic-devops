@@ -1,0 +1,15 @@
+pipeline {
+  agent any
+  options { timestamps(); timeout(time: 20, unit: 'MINUTES') }
+  stages {
+    stage('Test') {
+      steps { sh 'echo run-unit-tests' }
+    }
+    stage('Build') {
+      steps { sh 'echo docker-build-git-sha' }
+    }
+  }
+  post {
+    failure { echo 'notify-chat-no-secrets' }
+  }
+}

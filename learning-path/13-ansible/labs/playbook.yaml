@@ -1,0 +1,11 @@
+---
+- name: Ensure lab file exists
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create marker
+      copy:
+        dest: /tmp/devops-mastery-ansible.txt
+        content: "idempotent marker\n"
+        mode: "0644"
