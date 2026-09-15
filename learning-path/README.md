@@ -27,4 +27,7 @@ Follow the numbered modules in order. Each module explains the tool, provides sa
 23. **Platform engineering** — golden paths, internal developer platforms, Backstage
 24. **Enterprise capstone** — secure multi-environment delivery platform
 
-Current module: [01 — AWS Cloud](01-aws-cloud/) (foundations through capstone, labs, CLI cookbook, and interview Q&A).
+Current modules:
+
+- [01 — AWS Cloud](01-aws-cloud/)
+- [02 — Linux](02-linux/)
