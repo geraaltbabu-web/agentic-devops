@@ -1,8 +1,8 @@
 {
   "version": 1,
   "image_allowlist": [
-    "demo-api:*",
-    "agentic-devops-demo:*",
+    "clinic-api:*",
+    "ghcr.io/*/*:*",
     "ghcr.io/*/*:*",
     "docker.io/*/*:*"
   ],

@@ -2,7 +2,7 @@ param(
   [ValidateSet("plan", "deploy", "review", "rollback")]
   [string]$Command = "plan",
   [string]$Environment = "dev",
-  [string]$Image = "demo-api:1.1.0",
+  [string]$Image = "clinic-api:1.1.0",
   [switch]$Apply
 )
 

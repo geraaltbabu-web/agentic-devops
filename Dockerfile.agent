@@ -12,4 +12,4 @@ ENV AGENT_SIMULATE=1
 USER 65532:65532
 
 ENTRYPOINT ["python", "-m", "agent"]
-CMD ["plan", "--env", "dev"]
+CMD ["plan", "--env", "dev", "--image", "clinic-api:1.1.0"]

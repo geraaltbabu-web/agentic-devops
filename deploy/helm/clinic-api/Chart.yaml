@@ -1,0 +1,6 @@
+apiVersion: v2
+name: clinic-api
+description: Synthetic clinic API chart (health domain demo, no real PHI)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

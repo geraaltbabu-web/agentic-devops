@@ -16,7 +16,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("command", choices=["plan", "deploy", "review", "rollback"])
     parser.add_argument("--goal", default="")
     parser.add_argument("--env", default="")
-    parser.add_argument("--image", default="demo-api:1.1.0")
+    parser.add_argument("--image", default="clinic-api:1.1.0")
     parser.add_argument("--replicas", type=int, default=1)
     parser.add_argument("--apply", action="store_true", help="Execute mutating steps")
     parser.add_argument("--json", action="store_true")

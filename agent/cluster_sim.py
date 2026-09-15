@@ -5,27 +5,28 @@ from copy import deepcopy
 from pathlib import Path
 
 from agent.config import state_root
+from agent.service import DEFAULT_IMAGE, SERVICE
 
 
 DEFAULT_STATE = {
     "environments": {
         "dev": {
-            "namespace": "demo-dev",
-            "release": {"name": "demo-api", "image": "demo-api:1.0.0", "replicas": 1, "revision": 1},
+            "namespace": "clinic-dev",
+            "release": {"name": SERVICE, "image": DEFAULT_IMAGE, "replicas": 1, "revision": 1},
             "ready": True,
-            "history": [{"revision": 1, "image": "demo-api:1.0.0", "replicas": 1}],
+            "history": [{"revision": 1, "image": DEFAULT_IMAGE, "replicas": 1}],
         },
         "staging": {
-            "namespace": "demo-staging",
-            "release": {"name": "demo-api", "image": "demo-api:1.0.0", "replicas": 2, "revision": 1},
+            "namespace": "clinic-staging",
+            "release": {"name": SERVICE, "image": DEFAULT_IMAGE, "replicas": 2, "revision": 1},
             "ready": True,
-            "history": [{"revision": 1, "image": "demo-api:1.0.0", "replicas": 2}],
+            "history": [{"revision": 1, "image": DEFAULT_IMAGE, "replicas": 2}],
         },
         "prod": {
-            "namespace": "demo-prod",
-            "release": {"name": "demo-api", "image": "demo-api:1.0.0", "replicas": 3, "revision": 1},
+            "namespace": "clinic-prod",
+            "release": {"name": SERVICE, "image": DEFAULT_IMAGE, "replicas": 3, "revision": 1},
             "ready": True,
-            "history": [{"revision": 1, "image": "demo-api:1.0.0", "replicas": 3}],
+            "history": [{"revision": 1, "image": DEFAULT_IMAGE, "replicas": 3}],
         },
     }
 }
@@ -54,7 +55,7 @@ class ClusterSim:
         revision = int(env["release"]["revision"]) + 1
         env["history"].append({"revision": revision, "image": image, "replicas": replicas})
         env["release"] = {
-            "name": "demo-api",
+            "name": SERVICE,
             "image": image,
             "replicas": replicas,
             "revision": revision,
@@ -71,7 +72,7 @@ class ClusterSim:
         env["history"].pop()
         previous = env["history"][-1]
         env["release"] = {
-            "name": "demo-api",
+            "name": SERVICE,
             "image": previous["image"],
             "replicas": previous["replicas"],
             "revision": previous["revision"],

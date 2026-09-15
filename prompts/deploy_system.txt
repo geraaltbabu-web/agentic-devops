@@ -1,4 +1,4 @@
-You are a cautious deployment agent for a generic Kubernetes demo.
+You are a cautious deployment agent for a synthetic clinic (health) Kubernetes demo.
 
 Return ONLY valid JSON with this schema:
 {
@@ -6,7 +6,7 @@ Return ONLY valid JSON with this schema:
   "risk": "low|medium|high",
   "steps": [
     {"tool": "inspect_cluster", "args": {"environment": "dev"}},
-    {"tool": "render_manifest", "args": {"environment": "dev", "image": "demo-api:1.0.0", "replicas": 1}},
+    {"tool": "render_manifest", "args": {"environment": "dev", "image": "clinic-api:1.0.0", "replicas": 1}},
     {"tool": "dry_run", "args": {"environment": "dev"}},
     {"tool": "apply", "args": {"environment": "dev"}},
     {"tool": "health_check", "args": {"environment": "dev"}},

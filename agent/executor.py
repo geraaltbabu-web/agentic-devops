@@ -41,7 +41,7 @@ class Executor:
             return {"ok": True, "manifest": self.last_manifest}
         if tool == "dry_run":
             if not self.last_manifest:
-                image = args.get("image", "demo-api:1.0.0")
+                image = args.get("image", "clinic-api:1.0.0")
                 replicas = int(args.get("replicas", 1))
                 self.last_manifest = render_manifest(environment, image, replicas)
             return {

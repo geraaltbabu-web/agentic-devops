@@ -24,7 +24,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
           AGENT_SIMULATE: "1"
-        run: python -m agent plan --env staging --image demo-api:1.1.0 --json
+        run: python -m agent plan --env staging --image clinic-api:1.1.0 --json
 
   docker:
     runs-on: ubuntu-latest
@@ -32,6 +32,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build app image
-        run: docker build -t agentic-devops-demo:ci .
+        run: docker build -t clinic-api:ci .
       - name: Build agent image
         run: docker build -f Dockerfile.agent -t agentic-devops-agent:ci .

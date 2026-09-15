@@ -1,10 +1,8 @@
 {
-  "service": "demo-api",
+  "service": "clinic-api",
+  "domain": "health",
   "environment": "dev",
-  "image": "demo-api:1.0.0",
+  "image": "clinic-api:1.0.0",
   "replicas": 1,
-  "probes": {
-    "path": "/health",
-    "port": 8080
-  }
+  "probes": { "path": "/health", "port": 8080 }
 }

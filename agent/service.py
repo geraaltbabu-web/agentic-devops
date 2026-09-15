@@ -1,0 +1,3 @@
+SERVICE = "clinic-api"
+DEFAULT_IMAGE = f"{SERVICE}:1.0.0"
+NEXT_IMAGE = f"{SERVICE}:1.1.0"

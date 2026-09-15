@@ -1,1 +1,1 @@
-# Generic sample API for agentic DevOps exercises. Stdlib only.
+# Synthetic clinic API (health domain). No runtime dependencies.

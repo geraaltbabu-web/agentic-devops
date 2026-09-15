@@ -1,18 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agentic-devops-demo
+  name: clinic-api
   labels:
-    app: agentic-devops-demo
+    app: clinic-api
+    domain: health
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agentic-devops-demo
+      app: clinic-api
   template:
     metadata:
       labels:
-        app: agentic-devops-demo
+        app: clinic-api
+        domain: health
     spec:
       securityContext:
         runAsNonRoot: true
@@ -20,7 +22,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: app
-          image: agentic-devops-demo:local
+          image: clinic-api:local
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

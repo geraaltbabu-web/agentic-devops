@@ -25,16 +25,19 @@ def local_plan(goal: str, environment: str, image: str, replicas: int, apply: bo
     steps = [
         {"tool": "inspect_cluster", "args": {"environment": environment}},
         {
-            "tool": "update_gitops",
-            "args": {"environment": environment, "image": image, "replicas": replicas},
-        },
-        {
             "tool": "render_manifest",
             "args": {"environment": environment, "image": image, "replicas": replicas},
         },
         {"tool": "dry_run", "args": {"environment": environment}},
     ]
     if apply:
+        steps.insert(
+            1,
+            {
+                "tool": "update_gitops",
+                "args": {"environment": environment, "image": image, "replicas": replicas},
+            },
+        )
         steps.append({"tool": "apply", "args": {"environment": environment, "image": image, "replicas": replicas}})
         steps.append({"tool": "health_check", "args": {"environment": environment}})
     return {

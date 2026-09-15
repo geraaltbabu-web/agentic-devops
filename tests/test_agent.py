@@ -16,7 +16,7 @@ from agent.redaction import redact
 
 
 def test_health_payload_shape():
-    payload = json.loads('{"status":"ok","service":"agentic-devops-demo"}')
+    payload = json.loads('{"status":"ok","service":"clinic-api","domain":"health"}')
     assert payload["status"] == "ok"
 
 
@@ -36,7 +36,7 @@ def test_policy_blocks_unknown_image():
 
 
 def test_local_plan_includes_dry_run_before_apply():
-    plan = local_plan("deploy demo-api:1.1.0", "staging", "demo-api:1.1.0", 2, apply=True)
+    plan = local_plan("deploy clinic-api:1.1.0", "staging", "clinic-api:1.1.0", 2, apply=True)
     tools = [s["tool"] for s in plan["steps"]]
     assert tools.index("dry_run") < tools.index("apply")
 
@@ -54,7 +54,7 @@ def test_plan_without_apply_does_not_mutate(tmp_path: Path, monkeypatch: pytest.
         simulate=True,
         default_env="dev",
     )
-    plan = build_plan("plan rollout", "dev", "demo-api:1.1.0", 1, settings)
+    plan = build_plan("plan rollout", "dev", "clinic-api:1.1.0", 1, settings)
     executor = Executor(simulate=True, apply=False)
     executor.cluster = sim
     outcome = execute_plan(plan, executor)
@@ -70,15 +70,15 @@ def test_apply_updates_sim_cluster(tmp_path: Path):
         "summary": "apply",
         "risk": "low",
         "steps": [
-            {"tool": "render_manifest", "args": {"environment": "dev", "image": "demo-api:1.2.0", "replicas": 2}},
+            {"tool": "render_manifest", "args": {"environment": "dev", "image": "clinic-api:1.2.0", "replicas": 2}},
             {"tool": "dry_run", "args": {"environment": "dev"}},
-            {"tool": "apply", "args": {"environment": "dev", "image": "demo-api:1.2.0", "replicas": 2}},
+            {"tool": "apply", "args": {"environment": "dev", "image": "clinic-api:1.2.0", "replicas": 2}},
             {"tool": "health_check", "args": {"environment": "dev"}},
         ],
     }
     outcome = execute_plan(plan, executor)
     assert outcome["status"] == "ok"
-    assert sim.inspect("dev")["release"]["image"] == "demo-api:1.2.0"
+    assert sim.inspect("dev")["release"]["image"] == "clinic-api:1.2.0"
 
 
 def test_prod_apply_blocked_without_approval():
@@ -87,7 +87,7 @@ def test_prod_apply_blocked_without_approval():
         "summary": "prod",
         "risk": "high",
         "steps": [
-            {"tool": "apply", "args": {"environment": "prod", "image": "demo-api:1.2.0", "replicas": 3}},
+            {"tool": "apply", "args": {"environment": "prod", "image": "clinic-api:1.2.0", "replicas": 3}},
         ],
     }
     outcome = execute_plan(plan, executor)

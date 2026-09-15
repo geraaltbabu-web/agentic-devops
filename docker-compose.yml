@@ -1,5 +1,5 @@
 services:
-  demo-api:
+  clinic-api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -20,6 +20,6 @@ services:
       - ./gitops:/workspace/gitops
       - ./sim:/workspace/sim
       - ./policies:/workspace/policies
-    command: ["plan", "--env", "dev", "--image", "demo-api:1.1.0", "--json"]
+    command: ["plan", "--env", "dev", "--image", "clinic-api:1.1.0", "--json"]
     depends_on:
-      - demo-api
+      - clinic-api

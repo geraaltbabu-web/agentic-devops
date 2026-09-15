@@ -1,68 +1,68 @@
-# Agentic DevOps
+# Agentic DevOps — health (clinic) demo
 
-Generic, company-agnostic **end-to-end DevOps agent** demo. An AI planner proposes a deployment, guardrails validate it, GitOps desired state is updated, then a simulated cluster is dry-run / applied / health-checked.
+This is a **synthetic clinic** sample: appointments and health checks only. It is **not** banking or telecom, and it is **not** a real hospital system (no PHI, no patient names, no medical records).
 
-This repository contains **no customer, product, or internal-company data**. Sample names are `demo-api`, `dev`, `staging`, and `prod`.
+## Will it run if I follow the steps?
 
-## Flow
+**Yes for the demo path** (Python app + AI agent against a **simulated** cluster). That is what the steps below do.
 
-```
-goal --> planner (LLM or local) --> policy gates --> GitOps update
-      --> kubectl-style dry-run --> apply (optional) --> health check --> report
-```
+| Path | Runs by following steps? | Notes |
+|------|--------------------------|--------|
+| Unit tests + agent plan/apply on simulator | Yes | Needs Python 3.12+ |
+| Clinic API on localhost | Yes | `python app/main.py` or Docker |
+| GitHub Actions CI | Yes on GitHub-hosted runners | After the latest push |
+| Optional LLM planner | Only if you add an API key | Without a key, local planner is used |
+| Real Kubernetes/Helm apply | No by default | Manifests exist; you need a cluster |
 
-| Layer | Path | Role |
-|-------|------|------|
-| Sample app | `app/` | Tiny HTTP service with `/health` |
-| Agent | `agent/` | Plan, review, deploy, rollback CLI |
-| Guardrails | `policies/guardrails.json` | Image allowlist, prod lock, secret redaction |
-| GitOps | `gitops/environments/` | Desired state per environment |
-| Simulator | `sim/cluster.json` | In-process cluster so CI needs no kubeconfig |
-| Helm | `deploy/helm/demo-api/` | Optional chart for real clusters |
-| CI | `.github/workflows/` | Test, agent review, manual agent deploy |
+Production **apply** stays blocked unless you set `APPROVE_PROD=true`.
 
-## Quick start
+## 1) Verify (one script)
 
-```bash
-# from repo root
-export PYTHONPATH=.
-python -m agent plan --env staging --image demo-api:1.1.0
-python -m agent review --env staging
-python -m agent deploy --env staging --image demo-api:1.1.0          # plan + dry-run
-python -m agent deploy --env staging --image demo-api:1.1.0 --apply  # mutates simulator
+```powershell
+cd c:\Users\vishbhag\git\agentic-devops
+.\scripts\verify.ps1
 ```
 
-Production apply is blocked unless `APPROVE_PROD=true` **and** `--apply` is set.
+Expected: tests pass, then an agent **plan** for `clinic-api` on `staging` ends with `Result: ok`.
 
-## Optional LLM
+## 2) Run the clinic API
 
-If `AGENT_LLM_API_KEY` is set, the planner calls an OpenAI-compatible `/chat/completions` endpoint. If it is unset or the call fails, a deterministic local planner is used. See `.env.example`.
+```powershell
+python app\main.py
+```
 
-Store keys only in GitHub Actions secrets or a local `.env` (never commit them).
+In another terminal:
 
-## Docker
-
-```bash
-docker compose up --build demo-api
+```powershell
 curl http://localhost:8080/health
-
-docker compose run --rm agent plan --env dev --image demo-api:1.1.0 --json
+curl http://localhost:8080/appointments
 ```
 
-## Tests
+Or Docker:
 
-```bash
-pip install pytest
-PYTHONPATH=. pytest -q
+```powershell
+docker compose up --build clinic-api
 ```
 
-## GitHub Actions
+## 3) Let the agent deploy (simulator)
 
-- **CI** — unit tests, agent plan, image builds
-- **Agent review** — PR review of deploy/GitOps changes
-- **Agent deploy** — `workflow_dispatch` with environment, image, apply, and prod approval flags
+```powershell
+.\scripts\run-agent.ps1 -Command plan -Environment staging -Image clinic-api:1.1.0
+.\scripts\run-agent.ps1 -Command deploy -Environment staging -Image clinic-api:1.1.0 -Apply
+```
 
-For a real cluster later, keep `AGENT_SIMULATE=1` until you replace `ClusterSim` with `kubectl` behind the same tool interface. Do not point this demo at production systems that hold private data.
+`--apply` updates `sim/cluster.json` only. It does not touch a real cluster.
+
+## Layout
+
+| Path | Role |
+|------|------|
+| `app/` | Clinic API (`/health`, `/appointments`) |
+| `agent/` | Plan / review / deploy / rollback |
+| `policies/` | Guardrails |
+| `gitops/environments/` | Desired state |
+| `sim/` | Fake cluster |
+| `deploy/helm/clinic-api/` | Optional Helm chart |
 
 ## License
 

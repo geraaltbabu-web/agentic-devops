@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from agent.config import state_root
+from agent.service import SERVICE
 
 
 def desired_state_path(environment: str) -> Path:
@@ -18,7 +19,8 @@ def read_desired_state(environment: str) -> dict:
 def write_desired_state(environment: str, image: str, replicas: int) -> dict:
     path = desired_state_path(environment)
     payload = {
-        "service": "demo-api",
+        "service": SERVICE,
+        "domain": "health",
         "environment": environment,
         "image": image,
         "replicas": replicas,
@@ -30,31 +32,33 @@ def write_desired_state(environment: str, image: str, replicas: int) -> dict:
 
 
 def render_manifest(environment: str, image: str, replicas: int) -> str:
-    ns = f"demo-{environment}"
+    ns = f"clinic-{environment}"
     return f"""apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-api
+  name: {SERVICE}
   namespace: {ns}
   labels:
-    app: demo-api
+    app: {SERVICE}
+    domain: health
     env: {environment}
 spec:
   replicas: {replicas}
   selector:
     matchLabels:
-      app: demo-api
+      app: {SERVICE}
   template:
     metadata:
       labels:
-        app: demo-api
+        app: {SERVICE}
+        domain: health
         env: {environment}
     spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
       containers:
-        - name: demo-api
+        - name: {SERVICE}
           image: {image}
           ports:
             - containerPort: 8080
@@ -74,11 +78,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo-api
+  name: {SERVICE}
   namespace: {ns}
 spec:
   selector:
-    app: demo-api
+    app: {SERVICE}
   ports:
     - port: 80
       targetPort: http
