@@ -31,3 +31,4 @@ Current modules:
 
 - [01 — AWS Cloud](01-aws-cloud/)
 - [02 — Linux](02-linux/)
+- [03 — Git, GitHub, GitLab](03-git/)
