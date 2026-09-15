@@ -1,0 +1,25 @@
+services:
+  demo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    environment:
+      AGENT_SIMULATE: "1"
+      AGENT_APPLY: "false"
+      AGENT_LLM_API_KEY: ${AGENT_LLM_API_KEY:-}
+    volumes:
+      - ./gitops:/workspace/gitops
+      - ./sim:/workspace/sim
+      - ./policies:/workspace/policies
+    command: ["plan", "--env", "dev", "--image", "demo-api:1.1.0", "--json"]
+    depends_on:
+      - demo-api

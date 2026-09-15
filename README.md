@@ -1,36 +1,68 @@
-# Agentic DevOps Demo
+# Agentic DevOps
 
-A minimal reference project for **agentic DevOps** workflows: containerized app, CI pipeline, Kubernetes manifests, and local automation scripts.
+Generic, company-agnostic **end-to-end DevOps agent** demo. An AI planner proposes a deployment, guardrails validate it, GitOps desired state is updated, then a simulated cluster is dry-run / applied / health-checked.
 
-## What's included
+This repository contains **no customer, product, or internal-company data**. Sample names are `demo-api`, `dev`, `staging`, and `prod`.
 
-| Area | Path | Purpose |
-|------|------|---------|
-| App | `app/` | Small Python HTTP service with health endpoint |
-| Container | `Dockerfile` | Production-style image (non-root user) |
-| CI | `.github/workflows/ci.yml` | Build, test, and image build on push |
-| K8s | `deploy/k8s/` | Deployment + Service for cluster demos |
-| Scripts | `scripts/` | Smoke test and deploy helpers |
+## Flow
+
+```
+goal --> planner (LLM or local) --> policy gates --> GitOps update
+      --> kubectl-style dry-run --> apply (optional) --> health check --> report
+```
+
+| Layer | Path | Role |
+|-------|------|------|
+| Sample app | `app/` | Tiny HTTP service with `/health` |
+| Agent | `agent/` | Plan, review, deploy, rollback CLI |
+| Guardrails | `policies/guardrails.json` | Image allowlist, prod lock, secret redaction |
+| GitOps | `gitops/environments/` | Desired state per environment |
+| Simulator | `sim/cluster.json` | In-process cluster so CI needs no kubeconfig |
+| Helm | `deploy/helm/demo-api/` | Optional chart for real clusters |
+| CI | `.github/workflows/` | Test, agent review, manual agent deploy |
 
 ## Quick start
 
 ```bash
-# Local run (Python 3.11+)
-cd app && pip install -r requirements.txt && python main.py
-
-# Docker
-docker build -t agentic-devops-demo:local .
-docker run --rm -p 8080:8080 agentic-devops-demo:local
-curl http://localhost:8080/health
+# from repo root
+export PYTHONPATH=.
+python -m agent plan --env staging --image demo-api:1.1.0
+python -m agent review --env staging
+python -m agent deploy --env staging --image demo-api:1.1.0          # plan + dry-run
+python -m agent deploy --env staging --image demo-api:1.1.0 --apply  # mutates simulator
 ```
 
-## Kubernetes (demo)
+Production apply is blocked unless `APPROVE_PROD=true` **and** `--apply` is set.
+
+## Optional LLM
+
+If `AGENT_LLM_API_KEY` is set, the planner calls an OpenAI-compatible `/chat/completions` endpoint. If it is unset or the call fails, a deterministic local planner is used. See `.env.example`.
+
+Store keys only in GitHub Actions secrets or a local `.env` (never commit them).
+
+## Docker
 
 ```bash
-kubectl apply -f deploy/k8s/
-kubectl port-forward svc/agentic-devops-demo 8080:80
+docker compose up --build demo-api
 curl http://localhost:8080/health
+
+docker compose run --rm agent plan --env dev --image demo-api:1.1.0 --json
 ```
+
+## Tests
+
+```bash
+pip install pytest
+PYTHONPATH=. pytest -q
+```
+
+## GitHub Actions
+
+- **CI** — unit tests, agent plan, image builds
+- **Agent review** — PR review of deploy/GitOps changes
+- **Agent deploy** — `workflow_dispatch` with environment, image, apply, and prod approval flags
+
+For a real cluster later, keep `AGENT_SIMULATE=1` until you replace `ClusterSim` with `kubectl` behind the same tool interface. Do not point this demo at production systems that hold private data.
 
 ## License
 

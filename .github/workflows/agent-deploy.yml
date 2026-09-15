@@ -1,0 +1,49 @@
+name: Agent deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options: [dev, staging, prod]
+      image:
+        description: Container image
+        required: true
+        default: demo-api:1.1.0
+      apply:
+        description: Execute apply (otherwise plan only)
+        required: true
+        type: boolean
+        default: false
+      approve_prod:
+        description: Required to apply in prod
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run deployment agent
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          AGENT_SIMULATE: "1"
+          AGENT_APPLY: ${{ inputs.apply }}
+          APPROVE_PROD: ${{ inputs.approve_prod }}
+          AGENT_LLM_API_KEY: ${{ secrets.AGENT_LLM_API_KEY }}
+          AGENT_LLM_BASE_URL: ${{ secrets.AGENT_LLM_BASE_URL }}
+          AGENT_LLM_MODEL: ${{ vars.AGENT_LLM_MODEL }}
+        run: |
+          python -m agent deploy \
+            --env "${{ inputs.environment }}" \
+            --image "${{ inputs.image }}" \
+            --json

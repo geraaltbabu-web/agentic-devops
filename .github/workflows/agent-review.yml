@@ -1,0 +1,26 @@
+name: Agent review
+
+on:
+  pull_request:
+    paths:
+      - "deploy/**"
+      - "gitops/**"
+      - "policies/**"
+      - "agent/**"
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Review desired state with agent
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          AGENT_SIMULATE: "1"
+          AGENT_LLM_API_KEY: ${{ secrets.AGENT_LLM_API_KEY }}
+          AGENT_LLM_BASE_URL: ${{ secrets.AGENT_LLM_BASE_URL }}
+          AGENT_LLM_MODEL: ${{ vars.AGENT_LLM_MODEL }}
+        run: python -m agent review --env staging --json

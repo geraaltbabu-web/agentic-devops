@@ -1,0 +1,10 @@
+{
+  "service": "demo-api",
+  "environment": "dev",
+  "image": "demo-api:1.0.0",
+  "replicas": 1,
+  "probes": {
+    "path": "/health",
+    "port": 8080
+  }
+}

@@ -1,0 +1,15 @@
+FROM python:3.12-slim-bookworm
+
+WORKDIR /workspace
+COPY agent/ /workspace/agent/
+COPY policies/ /workspace/policies/
+COPY prompts/ /workspace/prompts/
+COPY gitops/ /workspace/gitops/
+COPY sim/ /workspace/sim/
+
+ENV PYTHONPATH=/workspace
+ENV AGENT_SIMULATE=1
+USER 65532:65532
+
+ENTRYPOINT ["python", "-m", "agent"]
+CMD ["plan", "--env", "dev"]

@@ -1,1 +1,1 @@
-# stdlib only — no runtime deps
+# Generic sample API for agentic DevOps exercises. Stdlib only.

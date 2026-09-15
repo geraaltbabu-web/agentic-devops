@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "image_allowlist": [
+    "demo-api:*",
+    "agentic-devops-demo:*",
+    "ghcr.io/*/*:*",
+    "docker.io/*/*:*"
+  ],
+  "max_replicas": 10,
+  "forbidden_apply_environments": ["prod"],
+  "require_dry_run_before_apply": true,
+  "require_health_check_after_apply": true,
+  "blocked_goal_patterns": [
+    "exfiltrat",
+    "dump secret",
+    "print credential",
+    "disable auth",
+    "rm -rf /"
+  ],
+  "secret_key_names": [
+    "password",
+    "secret",
+    "token",
+    "apikey",
+    "api_key",
+    "private_key",
+    "kubeconfig"
+  ]
+}

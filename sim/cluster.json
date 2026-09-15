@@ -1,0 +1,55 @@
+{
+  "environments": {
+    "dev": {
+      "namespace": "demo-dev",
+      "release": {
+        "name": "demo-api",
+        "image": "demo-api:1.0.0",
+        "replicas": 1,
+        "revision": 1
+      },
+      "ready": true,
+      "history": [
+        {
+          "revision": 1,
+          "image": "demo-api:1.0.0",
+          "replicas": 1
+        }
+      ]
+    },
+    "staging": {
+      "namespace": "demo-staging",
+      "release": {
+        "name": "demo-api",
+        "image": "demo-api:1.0.0",
+        "replicas": 2,
+        "revision": 1
+      },
+      "ready": true,
+      "history": [
+        {
+          "revision": 1,
+          "image": "demo-api:1.0.0",
+          "replicas": 2
+        }
+      ]
+    },
+    "prod": {
+      "namespace": "demo-prod",
+      "release": {
+        "name": "demo-api",
+        "image": "demo-api:1.0.0",
+        "replicas": 3,
+        "revision": 1
+      },
+      "ready": true,
+      "history": [
+        {
+          "revision": 1,
+          "image": "demo-api:1.0.0",
+          "replicas": 3
+        }
+      ]
+    }
+  }
+}
