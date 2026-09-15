@@ -1,0 +1,16 @@
+{
+  "environments": ["dev", "staging", "prod"],
+  "image_patterns": ["banking-*:*", "ghcr.io/*/banking-*:*", "ghcr.io/demo/banking:*"],
+  "max_replicas": 6,
+  "production": {
+    "requires_manual_approval": true,
+    "requires_signed_image": true,
+    "requires_change_record": true
+  },
+  "mandatory_checks": ["unit_tests", "secret_scan", "iac_scan", "image_scan", "server_dry_run", "health_check"],
+  "data_rules": {
+    "real_customer_data_allowed": false,
+    "log_account_numbers": false,
+    "log_credentials": false
+  }
+}

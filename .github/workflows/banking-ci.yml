@@ -1,0 +1,35 @@
+name: Banking platform CI
+on:
+  push:
+    paths: ["banking-platform/**", ".github/workflows/banking-ci.yml"]
+  pull_request:
+    paths: ["banking-platform/**", ".github/workflows/banking-ci.yml"]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: banking-platform}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Deployment-agent plan
+        run: python agent/deploy_agent.py --environment staging --image ghcr.io/demo/banking:1.0.0 --output json
+      - name: Build service image
+        run: docker build -t banking-service:test .
+      - uses: azure/setup-helm@v4
+      - name: Helm lint and render
+        run: |
+          helm lint platform/chart -f platform/environments/dev.yaml
+          helm template banking platform/chart -f platform/environments/dev.yaml > /tmp/rendered.yaml
+      - uses: hashicorp/setup-terraform@v3
+      - name: Terraform validate
+        run: |
+          terraform -chdir=infra/terraform init -backend=false
+          terraform -chdir=infra/terraform validate
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env: {GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"}

@@ -1,0 +1,88 @@
+{{- range .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ . }}
+  labels: {app: {{ . }}, domain: banking}
+spec:
+  replicas: {{ $.Values.global.replicas }}
+  selector: {matchLabels: {app: {{ . }}}}
+  template:
+    metadata:
+      labels: {app: {{ . }}, domain: banking}
+    spec:
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: {{ . }}
+          image: "{{ $.Values.global.registry }}/banking-{{ . }}:{{ $.Values.global.tag }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: SERVICE_NAME, value: {{ . | quote }}}
+            - {name: ENVIRONMENT, value: {{ $.Values.global.environment | quote }}}
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /ready, port: http}, initialDelaySeconds: 3}
+          livenessProbe: {httpGet: {path: /health, port: http}, initialDelaySeconds: 10}
+          resources: {{- toYaml $.Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ . }}
+spec:
+  selector: {app: {{ . }}}
+  ports: [{name: http, port: 8080, targetPort: http}]
+{{- if $.Values.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ . }}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: {{ . }}}
+  minReplicas: {{ $.Values.autoscaling.minReplicas }}
+  maxReplicas: {{ $.Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: {{ $.Values.autoscaling.targetCPU }}}
+{{- end }}
+{{- end }}
+{{- range .Values.services }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ . }}
+spec:
+  to: {kind: Service, name: {{ . }}}
+  port: {targetPort: http}
+  tls: {termination: edge, insecureEdgeTerminationPolicy: Redirect}
+{{- end }}
+{{- if .Values.networkPolicy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-platform
+spec:
+  podSelector: {matchLabels: {domain: banking}}
+  ingress:
+    - from: [{podSelector: {matchLabels: {domain: banking}}}]
+  egress:
+    - to: [{podSelector: {matchLabels: {domain: banking}}}]
+    - to: [{namespaceSelector: {}}]
+      ports: [{protocol: UDP, port: 53}]
+{{- end }}

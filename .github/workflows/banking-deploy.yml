@@ -1,0 +1,40 @@
+name: Banking agent deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [dev, staging, prod]
+        required: true
+      image:
+        description: Immutable image tag
+        default: ghcr.io/demo/banking:1.0.0
+        required: true
+      apply:
+        type: boolean
+        default: false
+        description: Apply after planning and dry-run
+permissions:
+  contents: read
+jobs:
+  plan-or-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    defaults: {run: {working-directory: banking-platform}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Authenticate to OpenShift
+        if: inputs.apply
+        env: {OPENSHIFT_TOKEN: "${{ secrets.OPENSHIFT_TOKEN }}", OPENSHIFT_SERVER: "${{ secrets.OPENSHIFT_SERVER }}"}
+        run: oc login "$OPENSHIFT_SERVER" --token="$OPENSHIFT_TOKEN"
+      - name: Plan
+        env:
+          AGENT_LLM_API_KEY: "${{ secrets.AGENT_LLM_API_KEY }}"
+          AGENT_LLM_BASE_URL: "${{ vars.AGENT_LLM_BASE_URL }}"
+          AGENT_LLM_MODEL: "${{ vars.AGENT_LLM_MODEL }}"
+        run: python agent/deploy_agent.py --environment "${{ inputs.environment }}" --image "${{ inputs.image }}" ${{ inputs.environment == 'prod' && '--approve-prod' || '' }}
+      - name: Apply through guarded agent
+        if: inputs.apply
+        run: python agent/deploy_agent.py --environment "${{ inputs.environment }}" --image "${{ inputs.image }}" --apply ${{ inputs.environment == 'prod' && '--approve-prod' || '' }}

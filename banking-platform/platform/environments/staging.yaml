@@ -1,0 +1,2 @@
+global: {environment: staging, tag: "1.0.0", replicas: 2}
+autoscaling: {enabled: true, minReplicas: 2, maxReplicas: 4, targetCPU: 65}

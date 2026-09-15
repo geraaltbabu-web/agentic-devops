@@ -1,0 +1,5 @@
+global: {environment: prod, tag: "1.0.0", replicas: 3}
+autoscaling: {enabled: true, minReplicas: 3, maxReplicas: 6, targetCPU: 60}
+resources:
+  requests: {cpu: 200m, memory: 256Mi}
+  limits: {cpu: "1", memory: 512Mi}

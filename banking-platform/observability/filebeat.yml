@@ -1,0 +1,16 @@
+filebeat.inputs:
+  - type: filestream
+    id: docker-logs
+    paths: ["/var/lib/docker/containers/*/*.log"]
+    parsers:
+      - container: {stream: all, format: docker}
+    processors:
+      - add_docker_metadata: {host: "unix:///var/run/docker.sock"}
+processors:
+  - drop_event:
+      when:
+        not:
+          regexp:
+            container.name: ".*(accounts|payments|ledger|fraud|notifications|gateway).*"
+output.logstash:
+  hosts: ["logstash:5044"]
