@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Free-tier-safe networking lab; creates no NAT Gateway or compute
+Parameters:
+  Owner:
+    Type: String
+    MinLength: 1
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - {Key: Name, Value: devops-mastery}
+        - {Key: Project, Value: devops-mastery}
+        - {Key: Owner, Value: !Ref Owner}
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: [{Key: Project, Value: devops-mastery}]
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: {VpcId: !Ref VPC, InternetGatewayId: !Ref InternetGateway}
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.20.10.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{Key: Name, Value: public-a}, {Key: Project, Value: devops-mastery}]
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.20.20.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{Key: Name, Value: private-a}, {Key: Project, Value: devops-mastery}]
+  PublicRoutes:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{Key: Name, Value: public}, {Key: Project, Value: devops-mastery}]
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRoutes
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PublicSubnet, RouteTableId: !Ref PublicRoutes}
+  PrivateRoutes:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags: [{Key: Name, Value: private}, {Key: Project, Value: devops-mastery}]
+  PrivateAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateSubnet, RouteTableId: !Ref PrivateRoutes}
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VPC
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds: [!Ref PrivateRoutes]
+  ApplicationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: No inbound traffic; explicit egress only
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0}
+      Tags: [{Key: Project, Value: devops-mastery}]
+Outputs:
+  VpcId: {Value: !Ref VPC}
+  PublicSubnetId: {Value: !Ref PublicSubnet}
+  PrivateSubnetId: {Value: !Ref PrivateSubnet}
+  S3EndpointId: {Value: !Ref S3Endpoint}
