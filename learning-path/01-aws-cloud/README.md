@@ -1,60 +1,82 @@
 # 01 — AWS Cloud for enterprise DevOps
 
-Goal: progress from a new AWS account to confidently operating secure, observable, cost-aware AWS environments and integrating them with a delivery platform.
+Goal: go from a new AWS sandbox to the level of a junior-to-mid platform engineer who can design, deploy, observe, secure, cost-control, and troubleshoot AWS in an enterprise delivery stack.
+
+This module is **theory + labs + enterprise patterns + failure drills + interview Q&A**. Later modules (Linux, Docker, OpenShift, GitLab, Jenkins, Argo CD, ELK, Prometheus/Grafana, Terraform) assume you finished this one.
 
 ## Before you begin
 
+Use a **personal sandbox account only**. Never use an employer, customer, or production account.
+
 You need:
 
-- A personal AWS sandbox account—never use an employer or production account
 - MFA on the root user
 - AWS CLI v2, Git, Python 3.12+, and an editor
-- A budget alert; labs avoid NAT Gateway, paid databases, and long-running compute
+- A monthly budget with email alerts at a low threshold
+- Willingness to **delete every lab resource** in the same session
 
-> AWS pricing and free-tier terms change. Check the AWS pricing page before every lab. Cleanup is mandatory.
+Optional later: GitHub Actions in this public repo, Terraform CLI, `jq`.
+
+> AWS pricing and free-tier terms change. Recheck pricing before any lab that creates compute, NAT, load balancers, databases, or OpenSearch. This course avoids NAT Gateway, RDS, OpenSearch, and always-on EC2 in the default labs.
+
+## How to study
+
+| Mode | What to do |
+|------|------------|
+| Read | Work chapters in order. Draw every diagram on paper. |
+| Lab | Run the matching lab the same day. Write a 5-line post-lab note: what, why, failure, fix, cleanup. |
+| Speak | Answer the Q&A out loud before reading the model answer. |
+| Prove | Finish the capstone without copying a tutorial blindly. |
+
+Suggested pace: **10–14 days**, 90–120 minutes per day. A weekend crash course is possible; retention will be worse.
 
 ## Learning sequence
 
-1. [Foundations and setup](01-foundations.md)
-2. [IAM, networking, compute, storage, and databases](02-core-services.md)
-3. [Enterprise DevOps integration](03-enterprise-devops.md)
-4. [Operations, security, reliability, and cost](04-operations.md)
+0. [Study plan and competency rubric](00-study-plan.md)
+1. [Foundations, IAM, CLI, and how AWS actually authorizes requests](01-foundations.md)
+2. [Networking, compute, storage, data, and observability services](02-core-services.md)
+3. [Enterprise DevOps: accounts, OIDC CI/CD, GitOps, Terraform, containers](03-enterprise-devops.md)
+4. [Operations, security, reliability, incidents, and cost](04-operations.md)
 5. [Real-world questions and answers](05-real-world-q-and-a.md)
-6. Complete the [hands-on labs](labs/README.md)
-7. Complete the [capstone](capstone.md)
+6. [CLI cookbook](06-cli-cookbook.md)
+7. [Glossary and service map](07-glossary.md)
+8. [How AWS connects to Linux, Docker, OCP, Git, CI, ELK, and Terraform](08-aws-in-the-devops-stack.md)
+9. [Hands-on labs](labs/README.md)
+10. [Capstone](capstone.md)
 
-## Competency checkpoints
+## What “expert enough for this module” means
 
-After this module you should be able to:
+You can, without notes, do all of the following:
 
-- Explain Regions, Availability Zones, the shared responsibility model, and AWS API behavior
-- Secure an account with IAM Identity Center, roles, temporary credentials, MFA, and least privilege
-- Design a three-tier VPC and reason about routes, security groups, NACLs, DNS, and endpoints
-- Select EC2, ECS, EKS, Lambda, or managed services based on operational trade-offs
-- Choose S3, EBS, EFS, RDS, DynamoDB, or ElastiCache for a workload
-- Use CloudTrail, CloudWatch, Config, GuardDuty, KMS, Secrets Manager, and Systems Manager
-- Build an enterprise CI/CD path using OIDC instead of permanent AWS keys
-- Diagnose common reachability, IAM, instance, deployment, and cost failures
-- Design backup, multi-AZ, autoscaling, recovery, and safe change strategies
+- Name the caller, Region, action, resource, and policy layer that caused an `AccessDenied`
+- Sketch a three-AZ VPC with public / private / isolated tiers and explain every hop
+- Choose EC2 vs ECS vs EKS/ROSA vs Lambda and defend the choice
+- Design S3, RDS, and DynamoDB usage with backup, encryption, and IAM
+- Describe a GitHub/GitLab/Jenkins → OIDC → IAM role → deploy path with no static keys
+- Diagnose ALB 502, private-subnet “no internet”, noisy CloudWatch, and a surprise bill
+- Write a rollback plan that includes schema compatibility and health checks
 
 ## Lab safety rules
 
-1. Use one sandbox Region, default `us-east-1`.
-2. Tag every resource: `Project=devops-mastery`, `Owner=<you>`, `Expires=<date>`.
-3. Run `aws sts get-caller-identity` before every change.
-4. Review generated plans/templates before deployment.
-5. Never commit credentials, account IDs, private keys, or state files.
-6. Run cleanup immediately after each lab.
-7. Check Cost Explorer and Budgets after lab sessions.
+1. One sandbox Region. Default `us-east-1`.
+2. Tag everything: `Project=devops-mastery`, `Owner=<you>`, `Expires=<YYYY-MM-DD>`.
+3. `aws sts get-caller-identity` before every change.
+4. Review templates and plans before apply.
+5. Never commit credentials, account IDs, private keys, SSO tokens, or Terraform state.
+6. Cleanup in the same sitting. Prefer CloudFormation delete over leftover console clicks.
+7. Open Cost Explorer after every session.
 
-## Evidence of completion
+## Evidence of completion (keep private)
 
-Keep only non-sensitive evidence in your own notes:
+Keep notes locally. Do **not** push:
 
-- Architecture decisions and diagrams
-- Sanitized command output
-- Failure symptoms, root causes, and fixes
-- Cost estimate and cleanup proof
-- Answers to the scenario questions
+- Access keys, tokens, cookies, MFA seeds
+- Account IDs, user ARNs, bucket names that include your account
+- Console screenshots with billing or identity
+- `~/.aws/` files
 
-Do not copy access keys, tokens, account IDs, resource ARNs, or console screenshots containing private details.
+You may push: diagrams with fake names, sanitized command shapes, architecture decisions, and answers to the scenario questions.
+
+## Public-repo rule
+
+This folder is designed to stay public. If you add your own lab output, scrub it first.

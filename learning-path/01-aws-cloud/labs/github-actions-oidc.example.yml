@@ -1,0 +1,23 @@
+# Example only. Replace every REPLACE_* value. Do not add real secrets.
+# This job plans; it does not apply.
+
+name: aws-oidc-example
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    environment: REPLACE_ENV
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::REPLACE_ACCOUNT_ID:role/REPLACE_DEPLOY_ROLE
+          aws-region: us-east-1
+      - run: aws sts get-caller-identity
+      - run: aws cloudformation validate-template --template-body file://learning-path/01-aws-cloud/labs/vpc.yaml

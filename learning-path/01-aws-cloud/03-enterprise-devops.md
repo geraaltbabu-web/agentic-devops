@@ -97,3 +97,57 @@ Design a pipeline for a container service with:
 - audit evidence retained for one year
 
 For every stage, identify the identity, permissions, input, output, failure behavior, timeout, retry policy, and retained evidence.
+
+## OIDC trust policy (study this until you can write it from memory)
+
+Human-readable rules:
+
+1. Principal is the GitHub/GitLab/Jenkins OIDC provider, not `*`
+2. `sts:AssumeRoleWithWebIdentity` only
+3. `token.actions.githubusercontent.com:aud` equals `sts.amazonaws.com` (GitHub’s usual audience)
+4. `sub` is constrained to `repo:ORG/REPO:environment:prod` or a protected ref
+5. Optional: `token.actions.githubusercontent.com:ref` equals `refs/heads/main`
+
+Never trust `repo:ORG/*` for production. Never skip `sub`.
+
+See `labs/oidc-trust-policy.example.json` and `labs/github-actions-oidc.example.yml`. They use placeholders only.
+
+## Artifact flow
+
+```text
+git commit SHA
+  -> CI build
+  -> image: 123456789012.dkr.ecr.region.amazonaws.com/app:git-abc123
+  -> scan + SBOM + sign
+  -> same digest promoted to staging, then prod
+```
+
+`latest` is not a version. Mutable tags cause “it worked in staging” incidents.
+
+ECR: image scanning on push, lifecycle to expire untagged images, KMS encryption, resource policy that only the deploy role can pull in prod.
+
+## Terraform on AWS (preview of module 12)
+
+State in S3 + lock. Plan in PR. Apply from protected environment. Providers pin versions. Modules versioned. Separate states:
+
+- `network`
+- `platform` (cluster, IAM, DNS)
+- `data`
+- `apps/<name>`
+
+Do not put database passwords in `terraform.tfvars` committed to Git. Use Secrets Manager data sources or external secret injection.
+
+## GitOps on AWS (preview of module 16)
+
+Argo CD in EKS/ROSA watches Git. Cluster credentials stay in the cluster. AWS is reached via IRSA for ECR pull, ALB controller, ExternalDNS, External Secrets. Git remains the desired state; AWS APIs are implementation.
+
+If both Jenkins and Argo CD can apply the same manifests, you will drift. Pick one mutator per environment.
+
+## Change management that enterprises actually use
+
+- Standard change: pipeline + automated gates
+- Normal change: CAB or platform approval for prod
+- Emergency change: break-glass + post-incident ticket
+- Every prod apply has a change ID in tags or Git commit trailer
+
+CloudTrail + Git SHA + image digest is the audit triangle. If you cannot join those three, you cannot answer “what shipped?”

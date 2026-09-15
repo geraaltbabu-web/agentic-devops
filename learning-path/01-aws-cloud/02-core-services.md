@@ -100,3 +100,72 @@ For each workload, document:
 8. exit and migration strategy
 
 Then justify the service. “It is managed” or “everyone uses it” is not a sufficient architecture decision.
+
+## VPC deep dive (what you must be able to draw)
+
+```text
+VPC 10.20.0.0/16
+  public-a 10.20.10.0/24  AZ-a   IGW route 0.0.0.0/0
+  public-b 10.20.11.0/24  AZ-b
+  app-a    10.20.20.0/24  AZ-a   no IGW; optional NAT or endpoints
+  app-b    10.20.21.0/24  AZ-b
+  data-a   10.20.30.0/24  AZ-a   no NAT; SG only from app SGs
+  data-b   10.20.31.0/24  AZ-b
+```
+
+Rules of thumb:
+
+- Load balancers of internet-facing type sit in **public** subnets; targets stay **private**
+- Databases never get public IPs
+- One route table per tier per AZ is easier to reason about than one giant table
+- Enable VPC flow logs on a sandbox once so you know what they look like; they cost money in production
+- S3/DynamoDB **gateway** endpoints are usually cheaper than NAT for AWS API traffic
+
+IPv4 public addresses now have an hourly cost in AWS. Prefer private + ALB/NLB rather than public EC2.
+
+## Security group patterns
+
+Bad: `0.0.0.0/0` on SSH and RDP.  
+Worse: that plus `All traffic`.  
+Enterprise: no inbound from internet except the load balancer SG; app SG allows only the LB SG on app port; DB SG allows only the app SG on 5432/3306; egress 443 only unless you have a documented exception.
+
+Reference SGs by **security group ID**, not CIDR, for east-west traffic.
+
+## Compute deep dive
+
+**EC2:** AMIs, instance types, placement, IMDS, user-data vs golden images, SSM, patch manager, ASG lifecycle hooks. Require IMDSv2. No SSH keys in Git. Encrypt EBS with a customer managed key when policy requires it.
+
+**ASG:** desired/min/max, health check type `ELB` vs `EC2`, termination policies, mixed instances, warmup. A rolling deploy that shrinks min to 0 is a self-inflicted outage.
+
+**Lambda:** 15-minute max, payload size, /tmp, VPC ENI cold starts, reserved vs provisioned concurrency, DLQ, idempotency on retries. Lambda in a VPC needs subnet IPs and often endpoints.
+
+**ECS/Fargate:** task definition is the unit of deploy; CPU/memory pairing is fixed for Fargate; execute command is the SSM analogue; task roles vs execution roles (execution pulls images and writes logs).
+
+**EKS/ROSA:** control plane vs data plane, add-ons, IRSA/pod identity, ingress vs OpenShift Route, upgrade skew. EKS is Kubernetes; ROSA is OpenShift on AWS. Pick one platform skill path and be honest about operational cost.
+
+## Storage and data deep dive
+
+**S3 classes:** Standard, IA, Glacier, Intelligent-Tiering. Lifecycle is how you stop log buckets from becoming a second payroll. Object Lock is compliance, not a backup substitute by itself.
+
+**RDS:** parameter groups, option groups, Multi-AZ, read replicas (async), storage autoscaling, Performance Insights, RDS Proxy, snapshot vs PITR. Engine upgrades are change-management events.
+
+**DynamoDB:** partition key cardinality, hot keys, on-demand vs provisioned, GSIs, streams, TTL, PITR, global tables. If you cannot explain the access pattern, do not pick DynamoDB.
+
+## Observability deep dive
+
+| Signal | Tool | Use |
+|--------|------|-----|
+| Metrics | CloudWatch | saturation, errors, latency |
+| Logs | CloudWatch Logs / OpenSearch | debug, audit of app events |
+| Traces | X-Ray / OTel | which hop is slow |
+| Config | Config | drift |
+| API audit | CloudTrail | who changed what |
+| Threat | GuardDuty | malware, unusual API |
+
+Golden signals for an HTTP API: availability, latency (p50/p95/p99), traffic, errors (4xx vs 5xx), saturation (CPU, connections, queue).
+
+Alarm design: `5xx rate > 1% for 5 minutes` is better than `CPU > 70%`. CPU is a cause candidate, not a customer symptom.
+
+## Checkpoint
+
+Draw the request path from browser to database including TLS termination, SG hops, and DNS. Then list three ways that path fails and how you would prove each.

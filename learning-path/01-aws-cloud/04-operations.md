@@ -88,3 +88,62 @@ Use Cost Explorer by service, usage type, Region, and tag. Common causes: NAT da
 ## Operational drill
 
 Create a tabletop exercise: deployment doubles latency and increases database connections while one AZ loses capacity. Explain detection, triage, mitigation, rollback, data verification, communication, and preventive changes.
+
+## Runbook skeleton (copy this for every service)
+
+1. **User impact:** what is broken, who is affected
+2. **Severity:** SEV1 (full outage) to SEV4 (cosmetic)
+3. **Dashboards:** latency, 5xx, saturation, dependency errors
+4. **Recent changes:** deploys, IAM, SG, Terraform, certs
+5. **Mitigations in order:** rollback, scale, fail over, feature flag off
+6. **Verification:** synthetic transaction + one real business path
+7. **Comms:** status page / stakeholder message every N minutes
+8. **Follow-up:** ticket, owner, due date, test that would have caught it
+
+## Backup vs HA vs DR
+
+| Need | Typical AWS pattern |
+|------|---------------------|
+| Disk dies | Multi-AZ RDS, EBS snapshots |
+| AZ dies | Multi-AZ compute + Multi-AZ data |
+| Account/Region dies | Pilot light or warm standby in second Region |
+| Ransomware / bad deploy | Versioning, backups, immutability, rollback |
+| Human deletes a table | PITR, SCPs denying wildcard delete, MFA delete |
+
+Write RTO and RPO as numbers. “We have backups” is not an RTO.
+
+## Patch and image pipeline
+
+- Rebuild AMIs / container bases on a schedule
+- Scan on build and on a cadence in the registry
+- Emergency CVE process: rebuild, redeploy, verify
+- Do not SSH in to “just yum update prod”
+
+## Networking incidents unique to AWS
+
+- NACL ephemeral ports not opened for return traffic
+- SG attached to the wrong ENI
+- Route table still pointing at a deleted NAT
+- Private hosted zone not associated to the VPC
+- Split-horizon DNS surprise
+- MTU / jumbo frames rarely, but VPN/Direct Connect more often
+- Interface VPC endpoint security groups blocking 443 from the app SG
+
+## Cost incident procedure
+
+1. Cost Explorer: service, Region, usage type, last 7 vs 30 days
+2. Check NAT, ALB hours, public IPv4, CloudWatch ingestion, unused EBS, snapshots, Elastic IPs
+3. Tag-based owner lookup
+4. Stop non-prod immediately if safe
+5. Add a budget alert if it was missing
+6. Write the prevention: quota, SCP, dashboard, or scheduled job
+
+## On-call expectations
+
+You are not expected to memorize every API. You are expected to:
+
+- check identity and Region first
+- use CloudTrail for control-plane changes
+- use metrics before logs, logs before guessing
+- mitigate before perfect root cause
+- leave the system more observable than you found it

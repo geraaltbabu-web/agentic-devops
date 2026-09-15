@@ -87,3 +87,51 @@ Design verbally:
 5. A migration from manually managed EC2 to containers
 
 For each, cover architecture, identity, network path, data, observability, failure behavior, cost, deployment, rollback, and evidence.
+
+## Extra enterprise questions
+
+**What is the difference between a task role and a task execution role on ECS?**  
+Execution role: pull images, write logs, retrieve secrets at start. Task role: what the app code can do at runtime (S3, SQS). Mixing them is a common over-privilege.
+
+**How do you give an EKS pod S3 access?**  
+IRSA or EKS Pod Identity: a Kubernetes service account mapped to an IAM role with a trust policy constrained to the OIDC issuer and service account. Do not put access keys in a Secret.
+
+**When is CloudFront in front of an ALB justified?**  
+Global cache, TLS at edge, WAF, DDoS, and cheaper egress for static/cacheable content. Skip it for a purely internal API.
+
+**How do you rotate an RDS password used by 20 tasks?**  
+Store in Secrets Manager, enable rotation, grant the task role `GetSecretValue` on that ARN, restart or refresh clients, never bake the password into the image.
+
+**A Terraform apply failed mid-way. What now?**  
+Read state vs real resources, do not hand-edit state first, `plan` again, fix the API error (IAM, quota, dependency), consider `refresh`. If the state lock is stuck, confirm no other apply is running before unlocking.
+
+**Why might `aws s3 cp` work while an app using a role fails?**  
+Your CLI uses a different principal (SSO admin) than the app role. Always reproduce with the app role via `sts assume-role` or the instance profile.
+
+**How do you restrict console access to one Region?**  
+IAM condition `aws:RequestedRegion` plus optional SCP. Remember global services still need careful exceptions.
+
+**What is a permission boundary used for?**  
+To let a team create roles without being able to create a role more powerful than the boundary. Platform teams use this for self-service.
+
+**Canary vs blue/green on AWS?**  
+Canary: small % of traffic, watch metrics, increase. Blue/green: two environments, flip. CodeDeploy, ALB weighted target groups, or service mesh can implement either. Choose based on extra cost vs faster rollback.
+
+**How do you prove encryption at rest for S3?**  
+Bucket default encryption, object metadata `ServerSideEncryption`, KMS key policy, CloudTrail, and a Config rule. A screenshot of a checkbox is weak evidence.
+
+**What do you do when GuardDuty fires `UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration`?**  
+Treat as incident: disable keys/roles, rotate, isolate instance, review CloudTrail, check IMDS hop limit and SSRF, rebuild the host from a clean AMI.
+
+**Why are VPC flow logs not the first tool?**  
+They are sampled or high-volume and cost money. Start with SG rules, routes, and application errors; use flow logs when those are exhausted.
+
+**How should non-prod differ from prod?**  
+Same architecture, smaller size, scheduled stop, weaker (but not public) data, cheaper logging retention, still no long-lived keys. Drift in architecture teaches the wrong muscle memory.
+
+**What is the blast radius of `Resource: "*"` on `iam:PassRole`?**  
+The principal can pass any role the account allows, including admin, to EC2/Lambda. Always constrain `PassRole` to explicit role ARNs and `iam:PassedToService`.
+
+## Self-score
+
+Give yourself 1 point per question you answered with: identity, verification, security, cost, and rollback. Below 12/20: restudy chapters 1–4. 12–16: proficient. 17+: ready for the capstone presentation.

@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cheap CloudWatch alarm for the learning lab; no compute
+Parameters:
+  Namespace:
+    Type: String
+    Default: DevOpsMastery
+Resources:
+  LabAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: devops-mastery-lab-heartbeat
+      Namespace: !Ref Namespace
+      MetricName: LabHeartbeat
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmDescription: Fires when the lab metric is missing or below 1
+Outputs:
+  AlarmName:
+    Value: !Ref LabAlarm

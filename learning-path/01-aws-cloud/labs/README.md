@@ -87,6 +87,39 @@ This may incur charges. Launch only a currently free-tier-eligible instance in a
 
 Connect with Session Manager, inspect systemd and logs, then terminate the instance and delete its role/profile/security group.
 
+## Lab 7 — OIDC design (no AWS spend)
+
+1. Read `oidc-trust-policy.example.json` and `github-actions-oidc.example.yml`.
+2. Rewrite the `sub` condition for:
+   - pull requests (plan only)
+   - `environment:staging`
+   - `environment:prod` plus a required reviewer
+3. List the exact IAM actions a **plan role** vs **apply role** need for CloudFormation + S3 + ECS (or EKS). Keep them separate.
+4. Explain what happens if `sub` is `repo:my-org/*`.
+
+No credentials. No live GitHub OIDC provider required.
+
+## Lab 8 — CloudWatch alarm (cheap)
+
+Create a metric alarm on a custom metric you put:
+
+```powershell
+aws cloudwatch put-metric-data --namespace DevOpsMastery --metric-name LabHeartbeat --value 1
+aws cloudformation deploy --stack-name devops-mastery-alarm --template-file labs/cloudwatch-alarm.yaml
+```
+
+Force it to ALARM, confirm the state, then delete the stack.
+
+## Lab 9 — cleanup drill
+
+Run `.\labs\cleanup.ps1` after replacing the stack names if you changed them. Confirm no `devops-mastery` stacks remain:
+
+```powershell
+aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE
+```
+
+Do not paste account-specific output into Git.
+
 ## Completion gate
 
 You are ready for the capstone when you can recreate the VPC, explain every route and IAM decision, prove cleanup, and diagnose an intentional security-group or permission failure without granting broad access.

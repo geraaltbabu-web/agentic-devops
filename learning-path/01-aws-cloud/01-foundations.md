@@ -91,3 +91,74 @@ Explain without notes:
 - Why `AccessDenied` can persist even when an identity policy contains `Allow`
 - Which services are global and which are regional
 - How you prove which identity and Region a script is using
+
+## Global vs regional (memorize)
+
+**Global or effectively global control planes:** IAM, Organizations, CloudFront, Route 53 (public hosted zones), WAF for CloudFront, S3 bucket names (global namespace), STS (regional endpoints exist; prefer regional).
+
+**Regional:** VPC, EC2, EBS, ELB, RDS, DynamoDB tables (unless global tables), Lambda, ECS, EKS, CloudWatch (per Region), most KMS keys.
+
+A common production bug is creating resources in `us-east-1` while the CLI default is `eu-west-1`. Always print Region in automation logs.
+
+## Root, SSO, roles, and break-glass
+
+| Identity | Used for | Never used for |
+|----------|----------|----------------|
+| Root | Account recovery, a few unique billing/org tasks | Daily work, CI, API keys |
+| Identity Center user + permission set | Humans | Long-lived keys |
+| IAM role | EC2, Lambda, ECS task, EKS/IRSA, CI OIDC | Shared passwords |
+| IAM user access key | Legacy only, rotated, scoped, alerted | New designs |
+| Break-glass role | Outage when IdP is down | Convenience |
+
+Break-glass must be: MFA, short session, CloudTrail alarm on assume-role, ticket after use, periodic access review.
+
+## Policy language that actually matters
+
+- `Action` wildcards: `s3:Get*` is still broad; prefer named actions
+- `Resource: "*"` is the usual over-privilege
+- `Condition` is how you restrict source VPC, TLS, tags, org ID, repo, branch
+- `NotAction` / `NotResource` are easy to get wrong; avoid until you can explain them
+- Permission boundaries cap the maximum a role can ever receive
+- SCPs cap the maximum an account can ever receive
+
+Example deny that enterprises use on buckets:
+
+```json
+{
+  "Sid": "DenyInsecureTransport",
+  "Effect": "Deny",
+  "Principal": "*",
+  "Action": "s3:*",
+  "Resource": ["arn:aws:s3:::REPLACE_BUCKET", "arn:aws:s3:::REPLACE_BUCKET/*"],
+  "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+}
+```
+
+## STS sessions
+
+`AssumeRole` returns temporary keys (`AccessKeyId`, `SecretAccessKey`, `SessionToken`). All three are required. Session duration is limited by role max session. MFA can be required via condition `aws:MultiFactorAuthPresent`.
+
+CI should request the **shortest** session that finishes the job. Humans should use 1 hour for admin, not 12 hours.
+
+## CloudTrail as the source of truth
+
+For every failed lab, find:
+
+- `eventTime`, `eventName`, `eventSource`
+- `userIdentity.arn` and `userIdentity.type`
+- `sourceIPAddress`, `userAgent`
+- `requestParameters` (redact secrets)
+- `errorCode`, `errorMessage`
+- `recipientAccountId` vs resources in another account
+
+If CloudTrail is not enabled in the Region you used, you are flying blind. Enable management events before you start creating resources.
+
+## Quotas
+
+Every service has quotas. Autoscaling, Lambda concurrency, EIPs, VPCs per Region, and IAM roles all fail with quota errors that look like application bugs. Bookmark Service Quotas. Request increases **before** a launch, not during an incident.
+
+## Checkpoint 2
+
+- Draw the evaluation order of IAM, SCP, resource policy, and KMS
+- Explain why a role in account A cannot read a KMS-encrypted object in account B with only an S3 allow
+- List five things that must never go into Git
